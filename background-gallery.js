@@ -121,19 +121,24 @@
         }
 
         function adjustBackgroundProperties () {
-            var width = backgrounds[galleryPointer].calculatedValues.backgroundWidth,
-                height = backgrounds[galleryPointer].calculatedValues.backgroundHeight,
+            var width,
+                height,
                 backgroundSize;
 
-            if (width === 'auto') {
-                backgroundSize = 'auto ' + height + 'px';
-            } else {
-                backgroundSize = width + 'px' + ' auto';
-            }
+            if (autoResizeImages) {
+                width = backgrounds[galleryPointer].calculatedValues.backgroundWidth;
+                height = backgrounds[galleryPointer].calculatedValues.backgroundHeight;
 
-            containerElement.style.backgroundSize = backgroundSize;
-            containerElement.style.backgroundPositionX = backgrounds[galleryPointer].calculatedValues.backgroundPosX + 'px';
-            containerElement.style.backgroundPositionY = backgrounds[galleryPointer].calculatedValues.backgroundPosY + 'px';
+                if (width === 'auto') {
+                    backgroundSize = 'auto ' + height + 'px';
+                } else {
+                    backgroundSize = width + 'px' + ' auto';
+                }
+
+                containerElement.style.backgroundSize = backgroundSize;
+                containerElement.style.backgroundPositionX = backgrounds[galleryPointer].calculatedValues.backgroundPosX + 'px';
+                containerElement.style.backgroundPositionY = backgrounds[galleryPointer].calculatedValues.backgroundPosY + 'px';
+            }
 
         }
 
