@@ -11,7 +11,8 @@
         aBGELength = autoBackgroungGalleryElements.length,
         BackgroundGallery,
         errorTexts,
-        defaultOptions;
+        defaultOptions,
+        items = [];
 
     errorTexts = {
         alreadyDefined: 'BackgroundGallery is already defined, exit loading'
@@ -23,15 +24,33 @@
     };
 
     BackgroundGallery = {
-        items: [],
         generate: function (options) {
-            this.items[options.id] = new BackgroundGalleryGenerator(options);
+            items[options.id] = new BackgroundGalleryGenerator(options);
         },
-        pause: function (id) {
-
+        pauseGalleryById: function (galleryId) {
+            items[galleryId].pause();
         },
-        resume: function (id) {
-
+        resumeGalleryById: function (galleryId) {
+            items[galleryId].resume();
+        },
+        pauseAllGalleries: function () {
+            itemIterator(function (item) {
+                item.pause();
+            });
+        },
+        resumeAllGalleries: function () {
+            itemIterator(function (item) {
+                item.resume();
+            });
+        },
+        addImageToGallery: function (galleryId, imageSrc) {
+            items[galleryId].addImage(imageSrc);
+        },
+        removeImageFromGallery: function (galleryId, imageSrc) {
+            items[galleryId].removeImage(imageSrc);
+        },
+        logItems: function () {
+            console.log(items);
         }
     };
 
@@ -46,7 +65,11 @@
             imageLoader = 0,
             defaultBackground = (containerElement.style.backgroundImage !== ''),
             interval = null,
-            autoResizeImages = options.autoResizeImages || true;
+            autoResizeImages = options.autoResizeImages || true,
+            timeToPause = 0,
+            changedBGTimestamp = null,
+            paused = false,
+            resumeTimeout = null;
 
         this.onFullyLoaded = options.onFullyLoaded || function () {};
 
@@ -56,9 +79,15 @@
         }
 
         function startInterval () {
+            changedBGTimestamp = new Date();
+
             interval = setInterval(function () {
                 changeBackground('next');
             }, galleryTimer);
+        }
+
+        function calculateTimeToPause () {
+            timeToPause = new Date() - changedBGTimestamp + timeToPause;
         }
 
         function changeBackground (trend) {
@@ -77,6 +106,7 @@
             }
 
             containerElement.style.backgroundImage = 'url(' + backgrounds[galleryPointer].url + ')';
+            changedBGTimestamp = new Date();
 
         }
 
@@ -120,14 +150,50 @@
             };
 
             img.src = path;
+
         }
+
+        this.pause = function () {
+            if (!paused) {
+                paused = true;
+                calculateTimeToPause();
+                clearTimeout(resumeTimeout);
+                clearInterval(interval);
+            }
+
+        };
+
+        this.resume = function () {
+            var timeout;
+
+            if (paused) {
+                paused = false;
+                timeout = galleryTimer - timeToPause;
+                changedBGTimestamp = new Date();
+
+                resumeTimeout = setTimeout(function () {
+                    changeBackground('next');
+                    timeToPause = 0;
+                    startInterval();
+                }, timeout);
+            }
+
+        };
+
+        this.addImage = function (src) {
+
+        };
+
+        this.removeImage = function (src) {
+
+        };
 
         addLoader();
         loadImages();
 
     }
 
-    function getCleanedBackground (path) {
+    function getCleanedBackgroundPath (path) {
         var reg1 = /'|"|url|\s|\(|\)/g;
         return path.replace(reg1, '');
     }
@@ -139,7 +205,7 @@
             srcArray = [];
 
         if (defaultBackground !== '') {
-            srcArray.push(getCleanedBackground(defaultBackground));
+            srcArray.push(getCleanedBackgroundPath(defaultBackground));
         }
 
         for (var i = 0; i < length; i += 1) {
@@ -156,6 +222,16 @@
             id: 'autoElem' + i,
             containerElement: containerElement,
             backgrounds: getSrcFromImages(containerElement)
+        }
+    }
+
+    function itemIterator (callback) {
+        var id;
+
+        for (id in items) {
+            if (callback !== 'undefined') {
+                callback(items[id]);
+            }
         }
     }
 
