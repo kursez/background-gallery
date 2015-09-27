@@ -59,10 +59,11 @@
 
     // Background Gallery Item Constructor
     function BackgroundGalleryGenerator (options) {
-        var id = options.id || null,
+
+        var id = toCamelCase(options.id) || null,
             backgrounds = options.backgrounds || null,
             galleryTimer = options.galleryTimer || defaultOptions.galleryTimer,
-            containerElement = options.containerElement || document.getElementById(id),
+            containerElement = options.containerElement || document.getElementById(options.id),
             autoResizeImages = options.autoResizeImages || true,
             galleryPointer = 0,
             imageLoader = 0,
@@ -72,10 +73,73 @@
             changedBGTimestamp = null,
             paused = false,
             resumeTimeout = null,
-            fullyLoaded = false;
+            fullyLoaded = false,
+            containerRatio = setContainerRatio();
+
+        if (containerElement.getAttribute('id') !== '') {
+            containerElement.setAttribute('id', options.id);
+        }
+
+        function setContainerRatio () {
+            return containerElement.offsetWidth / containerElement.offsetHeight;
+        }
+
+        function generateCalculatedValues () {
+            var i,
+                length = backgrounds.length;
+
+            for (i = 0; i < length; i+= 1) {
+                backgrounds[i].calculatedValues = getBackgroundCalculatedValuesForImage(backgrounds[i]);
+            }
+
+        }
+
+        function getBackgroundCalculatedValuesForImage (img) {
+            var obj,
+                width = containerElement.offsetWidth,
+                height = containerElement.offsetHeight;
+
+            if (img.ratio < containerRatio) {
+                obj =  {
+                    backgroundWidth: width,
+                    backgroundHeight: 'auto',
+                    backgroundPosX: 0,
+                    backgroundPosY: parseInt((height - (width / img.ratio)) / 2),
+                };
+
+            } else {
+                obj =  {
+                    backgroundWidth: 'auto',
+                    backgroundHeight: height,
+                    backgroundPosX: parseInt((width - (height * img.ratio)) / 2),
+                    backgroundPosY: 0
+                };
+            }
+
+            return obj;
+
+        }
+
+        function adjustBackgroundProperties () {
+            var width = backgrounds[galleryPointer].calculatedValues.backgroundWidth,
+                height = backgrounds[galleryPointer].calculatedValues.backgroundHeight,
+                backgroundSize;
+
+            if (width === 'auto') {
+                backgroundSize = 'auto ' + height + 'px';
+            } else {
+                backgroundSize = width + 'px' + ' auto';
+            }
+
+            containerElement.style.backgroundSize = backgroundSize;
+            containerElement.style.backgroundPositionX = backgrounds[galleryPointer].calculatedValues.backgroundPosX + 'px';
+            containerElement.style.backgroundPositionY = backgrounds[galleryPointer].calculatedValues.backgroundPosY + 'px';
+
+        }
 
         function onAllImagesLoaded () {
             containerElement.getElementsByClassName('loader')[0].style.display = 'none';
+            generateCalculatedValues();
             startInterval();
             if (!fullyLoaded) {
                 fullyLoaded = true;
@@ -112,6 +176,7 @@
                 }
             }
 
+            adjustBackgroundProperties();
             containerElement.style.backgroundImage = 'url(' + backgrounds[galleryPointer].url + ')';
             changedBGTimestamp = new Date();
 
@@ -154,6 +219,10 @@
                 imageLoaded.apply(that, [this]);
                 if (i === 0 && !defaultBackground) {
                     containerElement.style.backgroundImage = 'url("' + this.src + '")';
+                }
+                if (i === 0) {
+                    backgrounds[i].calculatedValues = getBackgroundCalculatedValuesForImage(imgObj);
+                    adjustBackgroundProperties();
                 }
                 if (imageLoader === backgrounds.length && !fullyLoaded) {
                     onAllImagesLoaded.apply(that);
@@ -305,11 +374,8 @@
 
     }
 
-    function toCamelCase(str) {
-        return str.replace(/(?:^\w|[A-Z]|\b\w|\s+)/g, function(match, index) {
-            if (+match === 0) return ""; // or if (/\s+/.test(match)) for white spaces
-            return index == 0 ? match.toLowerCase() : match.toUpperCase();
-        });
+    function toCamelCase(input) {
+        return input.replace(/(\-[a-z])/g, function($1){return $1.toUpperCase().replace('-','');});
     }
 
     if (aBGELength > 0) {
