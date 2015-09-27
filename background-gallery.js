@@ -43,13 +43,16 @@
                 item.resume();
             });
         },
-        addImageToGallery: function (galleryId, imageSrc) {
-            items[galleryId].addImage(imageSrc);
+        addImageToGallery: function (galleryId, imageSrc, useForce) {
+            items[galleryId].addImage(imageSrc, useForce);
         },
-        removeImageFromGallery: function (galleryId, imageSrc) {
-            items[galleryId].removeImage(imageSrc);
+        removeImageFromGallery: function (galleryId, imageSrc, type) {
+            items[galleryId].removeImage(imageSrc, type);
         },
-        logItems: function () {
+        setOnFullyLoaded: function (galleryId, callback) {
+            items[galleryId].onFullyLoaded = callback;
+        },
+        logItems: function () { // for development purposes
             console.log(items);
         }
     };
@@ -61,7 +64,6 @@
             galleryTimer = options.galleryTimer || defaultOptions.galleryTimer,
             containerElement = options.containerElement || document.getElementById(id),
             galleryPointer = 0,
-            galleryLength = backgrounds.length,
             imageLoader = 0,
             defaultBackground = (containerElement.style.backgroundImage !== ''),
             interval = null,
@@ -69,13 +71,16 @@
             timeToPause = 0,
             changedBGTimestamp = null,
             paused = false,
-            resumeTimeout = null;
-
-        this.onFullyLoaded = options.onFullyLoaded || function () {};
+            resumeTimeout = null,
+            fullyLoaded = false;
 
         function onAllImagesLoaded () {
             containerElement.getElementsByClassName('loader')[0].style.display = 'none';
             startInterval();
+            if (!fullyLoaded) {
+                fullyLoaded = true;
+                this.onFullyLoaded();
+            }
         }
 
         function startInterval () {
@@ -91,14 +96,16 @@
         }
 
         function changeBackground (trend) {
+            var galleryLength = backgrounds.length;
+
             if (trend === 'next') {
-                if (galleryPointer + 1 === galleryLength) {
+                if (galleryPointer + 1 >= galleryLength) {
                     galleryPointer = 0;
                 } else {
                     galleryPointer += 1;
                 }
             } else {
-                if (galleryPointer - 1 === -1) {
+                if (galleryPointer - 1 <= -1) {
                     galleryPointer = galleryLength - 1;
                 } else {
                     galleryPointer -= 1;
@@ -115,8 +122,11 @@
 
         }
 
-        function onImageLoaded () {
+        function imageLoaded (img) {
             imageLoader += 1;
+            if (this instanceof BackgroundGalleryGenerator) {
+                this.onImageLoaded(img);
+            }
 
         }
 
@@ -125,32 +135,63 @@
                 i;
 
             for (i = 0; i < galleriesLength; i += 1) {
-                loadImage(backgrounds[i], i);
+                loadImage.apply(this, [backgrounds[i], i]);
             }
 
         }
 
         function loadImage (path, i) {
             var img = new Image(),
-                imgObj = {};
+                imgObj = {},
+                that = this;
 
             img.onload = function() {
-                imgObj.width = img.width;
-                imgObj.height = img.height;
+                imgObj.width = this.width;
+                imgObj.height = this.height;
                 imgObj.ratio = imgObj.width / imgObj.height;
                 imgObj.url = path;
                 backgrounds[i] = imgObj;
-                onImageLoaded();
+                imageLoaded.apply(that, [this]);
                 if (i === 0 && !defaultBackground) {
-                    containerElement.style.backgroundImage = 'url("' + img.src + '")';
+                    containerElement.style.backgroundImage = 'url("' + this.src + '")';
                 }
-                if (imageLoader === backgrounds.length) {
-                    onAllImagesLoaded();
+                if (imageLoader === backgrounds.length && !fullyLoaded) {
+                    onAllImagesLoaded.apply(that);
                 }
             };
 
             img.src = path;
 
+        }
+
+        function backgroundsIterator (callback) {
+            var i,
+                length = backgrounds.length;
+
+            for (i = 0; i < length; i += 1) {
+                if (callback(i)) {
+                    break;
+                }
+            }
+        }
+
+        function findImagesInBackgrounds (src, threshold) {
+            var found = [];
+
+            backgroundsIterator(function (i) {
+                if (backgrounds[i].url === src) {
+                    found.push(i);
+                    if (typeof threshold && threshold === found.length) {
+                        return true;
+                    }
+                }
+            });
+
+            if (found.length === 0) {
+                return false;
+            } else {
+                return found;
+            }
         }
 
         this.pause = function () {
@@ -180,22 +221,48 @@
 
         };
 
-        this.addImage = function (src) {
+        this.addImage = function (src, useForce) {
+            if (typeof useForce !== 'undefined' && useForce === true) {
+                loadImage(src, backgrounds.length);
+            } else {
+                if (!findImagesInBackgrounds(src, 1)) {
+                    loadImage(src, backgrounds.length);
+                }
+            }
 
         };
 
-        this.removeImage = function (src) {
+        this.removeImage = function (src, type) {
+            var positions,
+                i,
+                length;
+
+            if (typeof type === 'undefined') {
+                positions = findImagesInBackgrounds(src);
+                length = positions.length;
+
+                if (positions !== false) {
+                    for (i = 0; i < length; i += 1) {
+                        backgrounds.splice(positions[i] - i, 1)
+                    }
+                }
+            }
 
         };
+
+        this.onFullyLoaded = options.onFullyLoaded || function () {};
+
+        this.onImageLoaded = options.onImageLoaded || function () {};
 
         addLoader();
-        loadImages();
+        loadImages.apply(this);
 
     }
 
     function getCleanedBackgroundPath (path) {
         var reg1 = /'|"|url|\s|\(|\)/g;
         return path.replace(reg1, '');
+
     }
 
     function getSrcFromImages (containerElement) {
@@ -213,6 +280,7 @@
         }
 
         return srcArray;
+
     }
 
     function autoOptionsFactory (i) {
@@ -223,16 +291,18 @@
             containerElement: containerElement,
             backgrounds: getSrcFromImages(containerElement)
         }
+
     }
 
     function itemIterator (callback) {
         var id;
 
         for (id in items) {
-            if (callback !== 'undefined') {
+            if (callback !== 'undefined' && items.hasOwnProperty(id)) {
                 callback(items[id]);
             }
         }
+
     }
 
     if (aBGELength > 0) {
