@@ -1,0 +1,22 @@
+{
+  "name": "background-gallery",
+  "main": "background-gallery.js",
+  "version": "0.0.0",
+  "homepage": "https://github.com/kursez/background-gallery",
+  "authors": [
+    "Konstantinos <konstantinos@kursez.com>"
+  ],
+  "description": "A multi purpose background gallery",
+  "moduleType": [
+    "globals"
+  ],
+  "keywords": [
+    "background",
+    "gallery",
+    "slider",
+    "fade",
+    "multi"
+  ],
+  "license": "MIT",
+  "ignore": []
+}
