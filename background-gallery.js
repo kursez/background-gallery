@@ -37,93 +37,95 @@
 
     // Background Gallery Item Constructor
     function BackgroundGalleryGenerator (options) {
-        this.id = options.id || null;
-        this.backgrounds = options.backgrounds || null;
-        this.galleryTimer = options.galleryTimer || defaultOptions.galleryTimer;
-        this.containerElement = options.containerElement || document.getElementById(this.id);
-        this.galleryPointer = 0;
-        this.galleryLength = this.backgrounds.length;
-        this.imageLoader = 0;
-        this.defaultBackground = (this.containerElement.style.backgroundImage !== '');
-        this.interval = null;
+        var id = options.id || null,
+            backgrounds = options.backgrounds || null,
+            galleryTimer = options.galleryTimer || defaultOptions.galleryTimer,
+            containerElement = options.containerElement || document.getElementById(id),
+            galleryPointer = 0,
+            galleryLength = backgrounds.length,
+            imageLoader = 0,
+            defaultBackground = (containerElement.style.backgroundImage !== ''),
+            interval = null,
+            autoResizeImages = options.autoResizeImages || true;
 
         this.onFullyLoaded = options.onFullyLoaded || function () {};
 
-        this.addLoader();
-        this.loadImages();
+        function onAllImagesLoaded () {
+            containerElement.getElementsByClassName('loader')[0].style.display = 'none';
+            startInterval();
+        }
+
+        function startInterval () {
+            interval = setInterval(function () {
+                changeBackground('next');
+            }, galleryTimer);
+        }
+
+        function changeBackground (trend) {
+            if (trend === 'next') {
+                if (galleryPointer + 1 === galleryLength) {
+                    galleryPointer = 0;
+                } else {
+                    galleryPointer += 1;
+                }
+            } else {
+                if (galleryPointer - 1 === -1) {
+                    galleryPointer = galleryLength - 1;
+                } else {
+                    galleryPointer -= 1;
+                }
+            }
+
+            containerElement.style.backgroundImage = 'url(' + backgrounds[galleryPointer].url + ')';
+
+        }
+
+        function addLoader () {
+            containerElement.innerHTML = containerElement.innerHTML + '<span class="loader"></span>';
+
+        }
+
+        function onImageLoaded () {
+            imageLoader += 1;
+
+        }
+
+        function loadImages () {
+            var galleriesLength = backgrounds.length,
+                i;
+
+            for (i = 0; i < galleriesLength; i += 1) {
+                loadImage(backgrounds[i], i);
+            }
+
+        }
+
+        function loadImage (path, i) {
+            var img = new Image(),
+                imgObj = {};
+
+            img.onload = function() {
+                imgObj.width = img.width;
+                imgObj.height = img.height;
+                imgObj.ratio = imgObj.width / imgObj.height;
+                imgObj.url = path;
+                backgrounds[i] = imgObj;
+                onImageLoaded();
+                if (i === 0 && !defaultBackground) {
+                    containerElement.style.backgroundImage = 'url("' + img.src + '")';
+                }
+                if (imageLoader === backgrounds.length) {
+                    onAllImagesLoaded();
+                }
+            };
+
+            img.src = path;
+        }
+
+        addLoader();
+        loadImages();
+
     }
-
-    BackgroundGalleryGenerator.prototype.onAllImagesLoaded = function () {
-        this.containerElement.getElementsByClassName('loader')[0].style.display = 'none';
-        this.startInterval();
-    };
-
-    BackgroundGalleryGenerator.prototype.startInterval = function () {
-        var that = this;
-        this.interval = setInterval(function () {
-            that.changeBackground('next');
-        }, this.galleryTimer);
-    };
-
-    BackgroundGalleryGenerator.prototype.addLoader = function () {
-        this.containerElement.innerHTML = this.containerElement.innerHTML + '<span class="loader"></span>';
-    };
-
-    BackgroundGalleryGenerator.prototype.changeBackground = function (trend) {
-        if (trend === 'next') {
-            if (this.galleryPointer + 1 === this.galleryLength) {
-                this.galleryPointer = 0;
-            } else {
-                this.galleryPointer += 1;
-            }
-        } else {
-            if (this.galleryPointer - 1 === -1) {
-                this.galleryPointer = this.galleryLength - 1;
-            } else {
-                this.galleryPointer -= 1;
-            }
-        }
-
-        this.containerElement.style.backgroundImage = 'url(' + this.backgrounds[this.galleryPointer].url + ')';
-
-    };
-
-    BackgroundGalleryGenerator.prototype.onImageLoaded = function () {
-        this.imageLoader += 1;
-    };
-
-    BackgroundGalleryGenerator.prototype.loadImages = function () {
-        var galleriesLength = this.backgrounds.length,
-            i;
-
-        for (i = 0; i < galleriesLength; i += 1) {
-            this.loadImage(this.backgrounds[i], i);
-        }
-
-    };
-
-    BackgroundGalleryGenerator.prototype.loadImage = function (path, i) {
-        var img = new Image(),
-            imgObj = {},
-            that = this;
-
-        img.onload = function() {
-            imgObj.width = img.width;
-            imgObj.height = img.height;
-            imgObj.ratio = imgObj.width / imgObj.height;
-            imgObj.url = path;
-            that.backgrounds[i] = imgObj;
-            that.onImageLoaded();
-            if (i === 0 && !that.defaultBackground) {
-                that.containerElement.style.backgroundImage = 'url("' + img.src + '")';
-            }
-            if (that.imageLoader === that.backgrounds.length) {
-                that.onAllImagesLoaded();
-            }
-        };
-
-        img.src = path;
-    };
 
     function getCleanedBackground (path) {
         var reg1 = /'|"|url|\s|\(|\)/g;
