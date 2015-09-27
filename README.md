@@ -2,14 +2,14 @@
 A multi purpose background gallery
 
 
-**!!!!! PLEASE DON'T use this library yet it is on development stage !!!!!**
+###**!!!!! PLEASE DON'T use this library yet it is on development stage !!!!!**###
 
 
 
 Background Gallery is an attempt to create a library non dependant from other libraries with a purpose of providing
 an automatic (and not!) way to have a changing image gallery on the background of a given container.
 
-**Features:**
+##**Features:**##
 
 - Unlimited galleries per page controlled from a global object;
 - Support for different types of effects and ways the gallery functions;
@@ -22,7 +22,7 @@ and many to come after the first release ...
 
 
 
-**How to use?**
+##**How to use?**##
 
 There are two ways to use **background gallery**
 
@@ -70,7 +70,7 @@ There are two ways to use **background gallery**
 
    
    
-**Further control**
+##**Further control**##
 
 `BackgroundGallery` global object offers various methods for controlling the generated galleries:
 

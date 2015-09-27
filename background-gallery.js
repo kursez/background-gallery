@@ -25,7 +25,7 @@
 
     BackgroundGallery = {
         generate: function (options) {
-            items[options.id] = new BackgroundGalleryGenerator(options);
+            items[toCamelCase(options.id)] = new BackgroundGalleryGenerator(options);
         },
         pauseGalleryById: function (galleryId) {
             items[galleryId].pause();
@@ -63,11 +63,11 @@
             backgrounds = options.backgrounds || null,
             galleryTimer = options.galleryTimer || defaultOptions.galleryTimer,
             containerElement = options.containerElement || document.getElementById(id),
+            autoResizeImages = options.autoResizeImages || true,
             galleryPointer = 0,
             imageLoader = 0,
             defaultBackground = (containerElement.style.backgroundImage !== ''),
             interval = null,
-            autoResizeImages = options.autoResizeImages || true,
             timeToPause = 0,
             changedBGTimestamp = null,
             paused = false,
@@ -303,6 +303,13 @@
             }
         }
 
+    }
+
+    function toCamelCase(str) {
+        return str.replace(/(?:^\w|[A-Z]|\b\w|\s+)/g, function(match, index) {
+            if (+match === 0) return ""; // or if (/\s+/.test(match)) for white spaces
+            return index == 0 ? match.toLowerCase() : match.toUpperCase();
+        });
     }
 
     if (aBGELength > 0) {
