@@ -9,10 +9,9 @@
 
     var autoBackgroungGalleryElements = document.querySelectorAll('[data-bg-auto]'),
         aBGELength = autoBackgroungGalleryElements.length,
-        BackgroundGallery,
+        backgroundGallery,
         errorTexts,
-        defaultOptions,
-        items = [];
+        defaultOptions;
 
     errorTexts = {
         alreadyDefined: 'BackgroundGallery is already defined, exit loading'
@@ -23,47 +22,72 @@
         imageLoaderThreshold: 300
     };
 
-    BackgroundGallery = {
-        generate: function (options) {
+    function BackgroundGallery() {
+        var items = {};
+
+        function itemIterator (callback) {
+            var id;
+
+            for (id in items) {
+                if (callback !== 'undefined' && items.hasOwnProperty(id)) {
+                    callback(items[id]);
+                }
+            }
+
+        }
+
+        this.generate = function (options) {
             items[toCamelCase(options.id)] = new BackgroundGalleryGenerator(options);
-        },
-        pauseGalleryById: function (galleryId) {
+        };
+
+        this.pauseGalleryById = function (galleryId) {
             items[galleryId].pause();
-        },
-        resumeGalleryById: function (galleryId) {
+        };
+
+        this.resumeGalleryById = function (galleryId) {
             items[galleryId].resume();
-        },
-        pauseAllGalleries: function () {
+        };
+
+        this.pauseAllGalleries = function () {
             itemIterator(function (item) {
                 item.pause();
             });
-        },
-        resumeAllGalleries: function () {
+        };
+
+        this.resumeAllGalleries = function () {
             itemIterator(function (item) {
                 item.resume();
             });
-        },
-        addImageToGallery: function (galleryId, imageSrc, useForce) {
+        };
+
+        this.addImageToGallery = function (galleryId, imageSrc, useForce) {
             items[galleryId].addImage(imageSrc, useForce);
-        },
-        removeImageFromGallery: function (galleryId, imageSrc, type) {
+        };
+
+        this.removeImageFromGallery = function (galleryId, imageSrc, type) {
             items[galleryId].removeImage(imageSrc, type);
-        },
-        setOnFullyLoaded: function (galleryId, callback) {
+        };
+
+        this.setOnFullyLoaded = function (galleryId, callback) {
             items[galleryId].onFullyLoaded = callback;
-        },
-        logItems: function () { // for development purposes
-            console.log(items);
+        };
+
+        this.getItems = function () {
+            return items;
+        };
+
+        this.getItem = function (galleryId) {
+            return items[galleryId];
         }
-    };
+
+    }
 
     // Background Gallery Item Constructor
     function BackgroundGalleryGenerator (options) {
-
         var id = toCamelCase(options.id) || null,
             backgrounds = options.backgrounds || null,
             galleryTimer = options.galleryTimer || defaultOptions.galleryTimer,
-            containerElement = options.containerElement || document.getElementById(options.id),
+            containerElement = options.containerElement || document.getElementById(options.id) || document.createElement('div'),
             autoResizeImages = options.autoResizeImages || true,
             galleryPointer = 0,
             imageLoader = 0,
@@ -75,7 +99,11 @@
             resumeTimeout = null,
             fullyLoaded = false,
             containerRatio = setContainerRatio(),
+            onBGChangeEvent;
+
+        if (typeof Event === constructor) {
             onBGChangeEvent = new Event(id + '-on-bg-change');
+        }
 
         if (containerElement.getAttribute('id') !== '') {
             containerElement.setAttribute('id', options.id);
@@ -326,6 +354,10 @@
 
         };
 
+        this.getGalleryId = function() {
+            return id;
+        };
+
         this.onFullyLoaded = options.onFullyLoaded || function () {};
 
         this.onImageLoaded = options.onImageLoaded || function () {};
@@ -370,29 +402,20 @@
 
     }
 
-    function itemIterator (callback) {
-        var id;
-
-        for (id in items) {
-            if (callback !== 'undefined' && items.hasOwnProperty(id)) {
-                callback(items[id]);
-            }
-        }
-
-    }
-
     function toCamelCase(input) {
         return input.replace(/(\-[a-z])/g, function($1){return $1.toUpperCase().replace('-','');});
     }
 
+    backgroundGallery = new BackgroundGallery();
+
     if (aBGELength > 0) {
         for (var i = 0; i < aBGELength; i += 1) {
-            BackgroundGallery.generate(autoOptionsFactory(i));
+            backgroundGallery.generate(autoOptionsFactory(i));
         }
     }
 
     if (typeof window.BackgroundGallery === 'undefined') {
-        window.BackgroundGallery = BackgroundGallery;
+        window.BackgroundGallery = backgroundGallery;
     } else {
         console.error(errorTexts.alreadyDefined);
     }
