@@ -185,7 +185,16 @@ Here is a list of all the `options` you can define when you are manually generat
     - galleryId: as described on the play/pause
     - imageSrc: the src of the image
     
+##**Events**##
     
-    
+Here you can find a list with all the available events you can 'catch' and use them accordingly:
+
+- On background change
+  
+  ```
+  document.addEventListener('<galleryId>-on-bg-change', function() {
+     console.log('the background has changed');
+  });
+ ```
 
 ####Thats all for now!!!####

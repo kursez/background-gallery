@@ -74,7 +74,8 @@
             paused = false,
             resumeTimeout = null,
             fullyLoaded = false,
-            containerRatio = setContainerRatio();
+            containerRatio = setContainerRatio(),
+            onBGChangeEvent = new Event(id + '-on-bg-change');
 
         if (containerElement.getAttribute('id') !== '') {
             containerElement.setAttribute('id', options.id);
@@ -184,6 +185,7 @@
             adjustBackgroundProperties();
             containerElement.style.backgroundImage = 'url(' + backgrounds[galleryPointer].url + ')';
             changedBGTimestamp = new Date();
+            document.dispatchEvent(onBGChangeEvent);
 
         }
 

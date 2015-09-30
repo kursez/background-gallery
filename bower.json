@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "homepage": "https://github.com/kursez/background-gallery",
   "authors": [
-    "Konstantinos <konstantinos@kursez.com>"
+    "Konstantinos Kataras<konstantinos@kursez.com>"
   ],
   "description": "A multi purpose background gallery",
   "moduleType": [
@@ -18,5 +18,8 @@
     "multi"
   ],
   "license": "MIT",
-  "ignore": []
+  "ignore": [],
+  "devDependencies": {
+    "jasmine-core": "jasmine#~2.3.4"
+  }
 }
